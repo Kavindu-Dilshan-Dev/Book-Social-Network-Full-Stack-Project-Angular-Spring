@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: username
       POSTGRES_PASSWORD: password
-      PG DATA: /var/lib/postgresql/data
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: book_social_network
     volumes:
       - postgres:/data/postgres
@@ -23,3 +23,6 @@ services:
 volumes:
   postgres:
     driver: local
+networks:
+  spring-demo:
+    driver: bridge
