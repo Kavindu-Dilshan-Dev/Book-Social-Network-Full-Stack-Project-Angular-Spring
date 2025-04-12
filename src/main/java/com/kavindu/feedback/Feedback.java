@@ -1,5 +1,6 @@
 package com.kavindu.feedback;
 
+import com.kavindu.book.Book;
 import com.kavindu.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,10 @@ public class Feedback extends BaseEntity {
 
     private Double note;
     private String comment;
+
+    @ManyToOne
+    @JoinColumn(name = "book_id")
+    private Book book;
 
 
 }
