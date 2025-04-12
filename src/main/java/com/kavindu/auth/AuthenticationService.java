@@ -10,7 +10,6 @@ import com.kavindu.user.User;
 import com.kavindu.user.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -39,9 +38,7 @@ public class AuthenticationService {
     private String activationUrl;
 
     public void register(RegistrationRequest request) throws MessagingException {
-        var userRole = roleRepository.findByName("USER")
-                // todo
-                .orElseThrow(()-> new IllegalStateException("ROLE USER was not initialized"));
+        var userRole = roleRepository.findByName("USER").orElseThrow(()-> new IllegalStateException("ROLE USER was not initialized"));
         var user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -52,10 +49,10 @@ public class AuthenticationService {
                 .roles(List.of(userRole))
                 .build();
             userRepository.save(user);
-            sendvalidationEmail(user);
+            validationEmail(user);
     }
 
-    private void sendvalidationEmail(User user) throws MessagingException {
+    private void validationEmail(User user) throws MessagingException {
         var newToken = generateAndSaveActivationToken(user);
         emailService.sendEmail(
                 user.getEmail(),
@@ -92,7 +89,7 @@ public class AuthenticationService {
         return codeBuilder.toString();
     }
 
-    public AuthenticationResponse authenticate(@Valid AuthenticationRequest request) {
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -103,7 +100,7 @@ public class AuthenticationService {
         var claims = new HashMap<String,Object>();
         var user = ((User)auth.getPrincipal());
         claims.put("fullName",user.fullName());
-        var jwtToken =jwtService.generateToken(claims,user);
+        var jwtToken =jwtService.generateToken(claims,(User) auth.getPrincipal());
 
         return AuthenticationResponse.builder().token(jwtToken).build();
     }
@@ -113,7 +110,7 @@ public class AuthenticationService {
         Token savedToken = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
         if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())){
-            sendvalidationEmail(savedToken.getUser());
+            validationEmail(savedToken.getUser());
             throw new RuntimeException("Activation token has expired. A new token has been sent to the same email");
         }
         var user = userRepository.findById(savedToken.getUser().getId())
@@ -122,5 +119,18 @@ public class AuthenticationService {
         userRepository.save(user);
         savedToken.setValidatedAt(LocalDateTime.now());
         tokenRepository.save(savedToken);
+    }
+
+    private void sendValidationEmail(User user) throws MessagingException{
+        var newToken = generateAndSaveActivationToken(user);
+
+        emailService.sendEmail(
+                user.getEmail(),
+                user.fullName(),
+                EmailTemplateName.ACTIVATE_ACCOUNT,
+                activationUrl,
+                (String) newToken,
+                "Account activation"
+        );
     }
 }

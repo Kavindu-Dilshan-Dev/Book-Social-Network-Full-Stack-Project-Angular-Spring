@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/book_social_network?createDatabaseIfNotExist=true
-    username: postgres
+    url: jdbc:mysql://localhost:3306/book_social_network?createDatabaseIfNotExist=true
+    username: root
     password: Kavindu@dilshan
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -11,8 +11,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
-      database: postgresql
-      database-platform: org.hibernate.dialect.PostgreSQLDialect
+      database: mysql
+      database-platform: org.hibernate.dialect.MySQLDialect
   mail:
     host: localhost
     port: 1025
